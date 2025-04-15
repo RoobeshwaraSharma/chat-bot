@@ -1,25 +1,48 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+import { getChatResponse } from "@/lib/services/chat-service";
+import { formatResponse } from "@/lib/utils";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export default function Home() {
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<
+    { role: "BOT" | "USER"; message: string }[]
+  >([]);
   const [userInput, setUserInput] = useState<string>("");
+  const [isMessageLoading, setIsMessageLoading] = useState(false);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (userInput.trim()) {
       // Add user message to the chat
-      setMessages((prevMessages) => [...prevMessages, `You: ${userInput}`]);
-
-      // Simple bot response (can be replaced with your bot logic)
       setMessages((prevMessages) => [
         ...prevMessages,
-        `Bot: You said "${userInput}"`,
+        { role: "USER", message: userInput },
       ]);
+      try {
+        setIsMessageLoading(true);
+        // Simple bot response (can be replaced with your bot logic)
+        const botResponse = await getChatResponse(userInput);
 
-      // Clear input field
-      setUserInput("");
+        const formattedMessage = formatResponse(botResponse.response);
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { role: "BOT", message: formattedMessage },
+        ]);
+
+        // Clear input field
+        setUserInput("");
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error
+            ? err.message
+            : "Something went wrong. Please try again.";
+        toast.error("Error occured!", { description: errorMessage });
+      } finally {
+        setIsMessageLoading(false);
+      }
     }
   };
 
@@ -38,21 +61,28 @@ export default function Home() {
             <div
               key={index}
               className={`flex ${
-                message.startsWith("You:") ? "justify-end" : "justify-start"
+                message.role === "USER" ? "justify-end" : "justify-start"
               } mb-2`}
             >
               <div
-                className={`text-sm p-3 max-w-xs rounded-lg ${
-                  message.startsWith("You:")
-                    ? "bg-gray-600 text-white"
-                    : "bg-gray-500 text-white"
+                className={`text-sm p-3 max-w-3/4 rounded-lg text-white ${
+                  message.role === "USER" ? "bg-gray-600" : ""
                 }`}
               >
-                <p>{message}</p>
+                {message.role === "BOT" ? (
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html: message.message,
+                    }}
+                  />
+                ) : (
+                  <p>{message.message}</p>
+                )}
               </div>
             </div>
           ))}
         </div>
+        {isMessageLoading && <Spinner />}
       </div>
 
       <div className="mt-4 flex space-x-2">
@@ -68,7 +98,7 @@ export default function Home() {
         <Button
           variant="secondary"
           onClick={handleSendMessage}
-          className="bg-gray-600 text-white hover:bg-gray-700 rounded-lg p-3"
+          className="bg-gray-600 text-white hover:bg-gray-700 rounded-lg p-3 gap-2"
         >
           Send
         </Button>
