@@ -1,108 +1,100 @@
 "use client";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
-import { getChatResponse } from "@/lib/services/chat-service";
-import { formatResponse } from "@/lib/utils";
-import { useState } from "react";
-import { toast } from "sonner";
+import { FaRobot } from "react-icons/fa";
+import Popup, { PopupHandle } from "@/components/ui/popup";
+import ChatBot from "@/components/page/chat-bot";
 
 export default function Home() {
-  const [messages, setMessages] = useState<
-    { role: "BOT" | "USER"; message: string }[]
-  >([]);
-  const [userInput, setUserInput] = useState<string>("");
-  const [isMessageLoading, setIsMessageLoading] = useState(false);
+  const formPopupRef = useRef<PopupHandle>(null);
+  const [showTooltip, setShowTooltip] = useState(false);
 
-  const handleSendMessage = async () => {
-    if (userInput.trim()) {
-      // Add user message to the chat
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { role: "USER", message: userInput },
-      ]);
-      try {
-        setIsMessageLoading(true);
-        // Simple bot response (can be replaced with your bot logic)
-        const botResponse = await getChatResponse(userInput);
-
-        const formattedMessage = formatResponse(botResponse.response);
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { role: "BOT", message: formattedMessage },
-        ]);
-
-        // Clear input field
-        setUserInput("");
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error
-            ? err.message
-            : "Something went wrong. Please try again.";
-        toast.error("Error occured!", { description: errorMessage });
-      } finally {
-        setIsMessageLoading(false);
-      }
+  const onOpenChatBot = () => {
+    if (formPopupRef) {
+      formPopupRef.current?.open();
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleSendMessage();
-    }
+  // Show tooltip after 1.5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowTooltip(true);
+    }, 1500);
+
+    return () => clearTimeout(timer); // Cleanup the timer on unmount
+  }, []);
+
+  // Hide tooltip after 10 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowTooltip(false);
+    }, 10000);
+
+    return () => clearTimeout(timer); // Cleanup the timer on unmount
+  }, []);
+
+  const handleCloseTooltip = () => {
+    setShowTooltip(false);
   };
 
   return (
-    <div className="flex flex-col justify-between h-screen p-20 bg-gray-800 text-white">
-      <div className="flex-1 overflow-y-auto space-y-4 p-4">
-        {/* Chat messages */}
-        <div>
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${
-                message.role === "USER" ? "justify-end" : "justify-start"
-              } mb-2`}
-            >
-              <div
-                className={`text-sm p-3 max-w-3/4 rounded-lg text-white ${
-                  message.role === "USER" ? "bg-gray-600" : ""
-                }`}
-              >
-                {message.role === "BOT" ? (
-                  <div
-                    dangerouslySetInnerHTML={{
-                      __html: message.message,
-                    }}
-                  />
-                ) : (
-                  <p>{message.message}</p>
-                )}
-              </div>
-            </div>
-          ))}
+    <div
+      className="relative min-h-screen bg-cover bg-center"
+      style={{
+        backgroundImage:
+          "url('https://www.srilanka.travel/image/travel-new-images/Cover-banner.jpg')", // Replace with the background image URL
+      }}
+    >
+      {/* Overlay to darken the background for text visibility */}
+      <div className="absolute top-0 left-0 w-full h-full bg-black opacity-40"></div>
+
+      {/* Main content */}
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center text-white">
+        <h1 className="text-6xl font-bold">AN ISLAND ESCAPE AWAITS YOU</h1>
+        <div className="mt-8">
+          <input
+            type="text"
+            className="p-4 rounded-lg text-white w-96 border-white border hover:border-amber-200 hover:shadow"
+            placeholder="Type place name..."
+          />
+          <Button
+            variant="ghost"
+            className="ml-4 px-8 py-2 border-white border"
+          >
+            Search
+          </Button>
         </div>
-        {isMessageLoading && <Spinner />}
       </div>
 
-      <div className="mt-4 flex space-x-2">
-        {/* Input field for user to type message */}
-        <Input
-          className="flex-1 p-3 rounded-lg border-none focus:ring-2 focus:ring-gray-300 bg-gray-700 text-white"
-          value={userInput}
-          onChange={(e) => setUserInput(e.target.value)}
-          onKeyDown={handleKeyPress} // Trigger on "Enter" key press
-          placeholder="Type a message..."
+      {/* Chatbot popup trigger button */}
+      <div className="absolute bottom-4 right-4">
+        <FaRobot
+          color="#F08000" // Change this to a color that matches or complements the background
+          size={100}
+          onClick={onOpenChatBot}
+          className="cursor-pointer p-2"
         />
-        {/* Send button */}
-        <Button
-          variant="secondary"
-          onClick={handleSendMessage}
-          className="bg-gray-600 text-white hover:bg-gray-700 rounded-lg p-3 gap-2"
-        >
-          Send
-        </Button>
+
+        {/* Tooltip for chatbot icon */}
+        {showTooltip && (
+          <div className="absolute top-[-30px] right-20 bg-gray-700 text-white text-sm p-2 rounded-md shadow-lg w-48">
+            {/* Close Button positioned at the top right corner, slightly overflowing */}
+            <button
+              className="absolute top-[-17px] right-[-5px] text-white font-bold text-lg cursor-pointer"
+              onClick={handleCloseTooltip}
+            >
+              &times;
+            </button>
+            <div>
+              <span>Hi, I am the Tourism Bot. How can I help you today?</span>
+            </div>
+          </div>
+        )}
       </div>
+
+      <Popup ref={formPopupRef} title="Tourism Chat Bot">
+        <ChatBot />
+      </Popup>
     </div>
   );
 }
