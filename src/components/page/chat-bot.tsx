@@ -2,11 +2,11 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { getChatResponse } from "@/lib/services/chat-service";
 import { formatResponse } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { FaArrowAltCircleUp } from "react-icons/fa";
+import { getChatResponseFromLlama } from "@/lib/services/chat-api";
 
 export default function ChatBot() {
   const [messages, setMessages] = useState<
@@ -36,9 +36,9 @@ export default function ChatBot() {
       setUserInput("");
       try {
         setIsMessageLoading(true);
-        const botResponse = await getChatResponse(userInput);
+        const botResponse = await getChatResponseFromLlama(userInput);
 
-        const formattedMessage = formatResponse(botResponse.response);
+        const formattedMessage = formatResponse(botResponse);
         setMessages((prevMessages) => [
           ...prevMessages,
           { role: "BOT", message: formattedMessage },
