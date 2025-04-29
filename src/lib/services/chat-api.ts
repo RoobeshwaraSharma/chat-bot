@@ -5,7 +5,7 @@ export const getChatResponseFromLlama = async (
   query: string
 ): Promise<string> => {
   try {
-    const apiKey = process.env.API_TOKEN; // This works because it's server-side code
+    const apiKey = process.env.API_TOKEN;
     if (!apiKey) {
       throw new Error("API token is missing.");
     }
@@ -28,7 +28,6 @@ export const getChatResponseFromLlama = async (
       "Sorry, I couldn’t understand your query."
     );
   } catch (err) {
-    console.log(err);
     if (err instanceof Error) {
       // Check if it's a network error
       if (err.message.includes("Network Error")) {
