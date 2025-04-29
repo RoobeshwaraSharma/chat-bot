@@ -55,7 +55,7 @@ chat-bot/
 
 1. **Clone the repository**
    ```sh
-   git clone https://github.com/your-repo/new-shop.git
+   git clone https://github.com/RoobeshwaraSharma/chat-bot.git
    cd new-shop
    ```
 2. **Install dependencies**
